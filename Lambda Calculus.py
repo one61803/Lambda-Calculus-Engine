@@ -270,6 +270,8 @@ def lambda_process(string_ST):
                         DEBUG(debug_3, f"lambda_pos_LSNT[beta_height_2_NT] = {lambda_pos_LSNT[beta_height_2_NT]}")
                         DEBUG(debug_6, f"L267. beta_open_NT = {beta_open_NT}")
                         DEBUG(debug_6, f"L269. beta_lambda_NT = {beta_lambda_NT}")
+                elif (string_ST[i] == ")"):
+                    terrace_LSST[height_NT + 1] = ""
         "If beta_BL is True then there is a beta-reduction to be done."
         if beta_BL:
             height_NT = beta_height_1_NT - 1
