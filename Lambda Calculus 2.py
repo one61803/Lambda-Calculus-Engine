@@ -55,6 +55,12 @@ lambda_process(lambda_stamps("((MULT TWO) THREE)"))
 
 lambda_process(lambda_stamps("((MULT THREE) THREE)"))
 '(λBJQ.(λHUA.(BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ HUA)))))))))))'
+
+lambda_process(lambda_stamps("(CAR ((CONS 12) 20))"))
+'12'
+
+lambda_process(lambda_stamps("(CDR ((CONS 12) 20))"))
+'20'
 """
 
 def is_well_formed(string_ST):
@@ -394,12 +400,14 @@ def lambda_stamps(string_ST):
             string_ST = string_ST.replace("CONS", "(λa.(λb.(λm.((m a) b))))")
             continue_BL = True
         elif "CAR" in string_ST:
-            "Note: CAR is meant to be fed to a CONS, but it is isomorphic to TRUE."
-            string_ST = string_ST.replace("CAR", "(λa.(λb.a))")
+            #"Note: CAR is meant to be fed to a CONS, but it is isomorphic to TRUE."
+            #string_ST = string_ST.replace("CAR", "(λa.(λb.a))")
+            string_ST = string_ST.replace("CAR", "(λp.(p TRUE))")
             continue_BL = True
         elif "CDR" in string_ST:
-            "Note: CDR is meant to be fed to a CONS, but it is isomorphic to FALSE."
-            string_ST = string_ST.replace("CDR", "(λa.(λb.b))")
+            #"Note: CDR is meant to be fed to a CONS, but it is isomorphic to FALSE."
+            #string_ST = string_ST.replace("CDR", "(λa.(λb.b))")
+            string_ST = string_ST.replace("CDR", "(λp.(p FALSE))")
             continue_BL = True
         elif "ZERO" in string_ST:
             "Note: ZERO is meant to be used as a Church numeral, but it is isomorphic to FALSE."
@@ -423,6 +431,9 @@ def lambda_stamps(string_ST):
         elif "MULT" in string_ST:
             string_ST = string_ST.replace("MULT", "(λa.(λb.((a (ADD b)) ZERO)))")
             continue_BL = True
+        elif "PRED" in string_ST:
+            #string_ST = string_ST.replaced("PRED", "(λn.
+            print(".....")
     return string_ST
 
 def lambda_test(number_NT):
