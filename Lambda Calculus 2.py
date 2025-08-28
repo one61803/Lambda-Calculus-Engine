@@ -70,6 +70,9 @@ lambda_process(lambda_stamps("(CDR ((CONS 12) 20))"))
 
 >>> lambda_process(lambda_stamps("(PRED THREE)"))                                                                                                                                                                                             
 '(λLDI.(λGOT.(LDI (LDI GOT))))'
+
+>>> lambda_process(lambda_stamps("((MKFACT WHAT) ZERO)"))                                                                                                                                                                                         
+'(λWHV.(λSKN.(WHV SKN)))'
 """
 
 def is_well_formed(string_ST):
@@ -301,52 +304,55 @@ def lambda_process(string_ST):
             beta_dot_NT = -1
             beta_space_NT = -1            
             beta_close_NT = -1
-            DEBUG(debug_8, f"L378. beta_space_NT = {beta_space_NT}")
-            DEBUG(debug_8, f"L379. beta_close_NT = {beta_close_NT}")
+            DEBUG(debug_8, f"L307. beta_space_NT = {beta_space_NT}")
+            DEBUG(debug_8, f"L308. beta_close_NT = {beta_close_NT}")
             for i in range(beta_open_NT, len(string_ST)):
-                DEBUG(debug_4, f"L381. i = {i} ; {string_ST[ : i]}")
+                DEBUG(debug_4, f"L310. i = {i} ; {string_ST[ : i]}")
                 if (string_ST[i] == "("):
                     height_NT += 1
-                    DEBUG(debug_4, f"L384. height_NT = {height_NT}")
+                    DEBUG(debug_4, f"L313. height_NT = {height_NT}")
                 elif (i > 0) and (string_ST[i - 1] == ")"):
                     height_NT -= 1
-                    DEBUG(debug_4, f"L387. height_NT = {height_NT}")
+                    DEBUG(debug_4, f"L316. height_NT = {height_NT}")
                 if (string_ST[i] == ".") and (height_NT == beta_height_2_NT):
                     if (beta_space_NT == -1):
                         beta_dot_NT = i
-                        DEBUG(debug_8, f"L391. beta_dot_NT = {beta_dot_NT}")
+                        DEBUG(debug_8, f"L320. beta_dot_NT = {beta_dot_NT}")
                 elif (string_ST[i] == " ") and (height_NT == beta_height_1_NT):
                     beta_space_NT = i
-                    DEBUG(debug_8, f"L394. beta_space_NT = {beta_space_NT}")
+                    DEBUG(debug_8, f"L323. beta_space_NT = {beta_space_NT}")
                 elif (string_ST[i] == ")") and (height_NT == beta_height_1_NT):
                     beta_close_NT = i
-                    DEBUG(debug_8, f"L397. beta_close_NT = {beta_close_NT}")
+                    DEBUG(debug_8, f"L326. beta_close_NT = {beta_close_NT}")
                     break
             beta_variable_ST = string_ST[beta_lambda_NT + 1 : beta_dot_NT]
-            DEBUG(debug_6, f"L412. beta_variable_ST = {beta_variable_ST}")
+            DEBUG(debug_6, f"L329. beta_variable_ST = {beta_variable_ST}")
             string_ST = string_ST[ : beta_lambda_NT + 1] + "#"*len(beta_variable_ST) + string_ST[beta_dot_NT : ]
             for i in range(beta_dot_NT + 1, beta_space_NT):
                 if (string_ST[i : i + len(beta_variable_ST)] == beta_variable_ST):
-                    string_ST = string_ST[ : i] + "_"*len(beta_variable_ST) + string_ST[i + len(beta_variable_ST) : ]
+                    if not string_ST[i + len(beta_variable_ST)].isalnum():
+                        if (not string_ST[i - 1].isalnum()) or (string_ST[i - 1] == "λ"):
+                            string_ST = string_ST[ : i] + "_"*len(beta_variable_ST) + string_ST[i + len(beta_variable_ST) : ]
             beta_replacer_ST = string_ST[beta_space_NT + 1 : beta_close_NT]
             string_ST = string_ST[ : beta_space_NT + 1] + "*" + string_ST[beta_close_NT : ]
             while "##" in string_ST:
                 string_ST = string_ST.replace("##", "#")
             while "__" in string_ST:
                 string_ST = string_ST.replace("__", "_")
-            DEBUG(debug_8, f"L423. string_ST = {string_ST}")
+            DEBUG(debug_8, f"L340. string_ST = {string_ST}")
             string_ST = string_ST.replace("_", beta_replacer_ST)
             string_ST = string_ST.replace("((λ#.", "")
             string_ST = string_ST.replace(") *)", "")
-            DEBUG(debug_8 or debug_9, f"L427. string_ST = {string_ST} <<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            DEBUG(debug_8 or debug_9, f"L344. string_ST = {string_ST} <<<<<<<<<<<<<<<<<<<<<<<<<<<")
             if not is_well_formed(string_ST):
-                DEBUG(debug_10, f"L429. string_ST = {string_ST}")
-                print("L430. ERROR: the string resulting from the latest beta-reduction is not well-formed.")
+                DEBUG(debug_10, f"L346. string_ST = {string_ST}")
+                print("L347. ERROR: the string resulting from the latest beta-reduction is not well-formed.")
                 quit()
             string_ST = alpha_replacement(string_ST)
     return string_ST
 
 def lambda_stamps(string_ST):
+    "Reference: https://www.cs.du.edu/~jedgingt/Courses/PL/Papers/Blaheta2000.pdf."
     continue_BL = True
     while continue_BL:
         continue_BL = False
@@ -365,6 +371,12 @@ def lambda_stamps(string_ST):
         elif "CDR" in string_ST:
             string_ST = string_ST.replace("CDR", "(λp.(p FALSE))")
             continue_BL = True
+        elif "IF" in string_ST:
+            string_ST = string_ST.replace("IF", "(λC.(λT.(λF.((C T) F))))")
+            continue_BL = True
+        elif "ISZERO" in string_ST:
+            string_ST = string_ST.replace("ISZERO", "(λn.((n (λDUMMY.FALSE)) TRUE))")
+            continue_BL = True
         elif "ZERO" in string_ST:
             "Note: ZERO is meant to be used as a Church numeral, but it is isomorphic to FALSE."
             string_ST = string_ST.replace("ZERO", "(λf.(λx.x))")
@@ -378,6 +390,12 @@ def lambda_stamps(string_ST):
         elif "THREE" in string_ST:
             string_ST = string_ST.replace("THREE", "(λf.(λx.(f (f (f x)))))")
             continue_BL = True
+        elif "FOUR" in string_ST:
+            string_ST = string_ST.replace("FOUR", "(λf.(λx.(f (f (f (f x))))))")
+            continue_BL = True
+        elif "FIVE" in string_ST:
+            string_ST = string_ST.replace("FIVE", "(λf.(λx.(f (f (f (f (f x)))))))")
+            continue_BL = True
         elif "SUCC" in string_ST:
             string_ST = string_ST.replace("SUCC", "(λn.(λf.(λx.(f ((n f) x)))))")
             continue_BL = True
@@ -389,6 +407,9 @@ def lambda_stamps(string_ST):
             continue_BL = True
         elif "PRED" in string_ST:
             string_ST = string_ST.replace("PRED", "(λn.(CDR ((n (λp.((CONS (SUCC (CAR p))) (CAR p)))) ((CONS ZERO) ZERO))))")
+            continue_BL = True
+        elif "MKFACT" in string_ST:
+            string_ST = string_ST.replace("MKFACT", "(λFACT.(λn.(((IF (ISZERO n)) ONE) ((MULT n) (FACT (PRED n))))))")
             continue_BL = True
     return string_ST
 
