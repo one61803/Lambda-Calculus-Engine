@@ -62,9 +62,6 @@ lambda_process(lambda_stamps("(CAR ((CONS 12) 20))"))
 lambda_process(lambda_stamps("(CDR ((CONS 12) 20))"))
 '20'
 
->>> lambda_process(lambda_stamps("(PRED THREE)"))
-???
-
 >>> lambda_process(lambda_stamps("(PRED TWO)"))
 '(λBRN.(λTTD.(BRN TTD)))'
 
