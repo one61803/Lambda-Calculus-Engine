@@ -61,6 +61,18 @@ lambda_process(lambda_stamps("(CAR ((CONS 12) 20))"))
 
 lambda_process(lambda_stamps("(CDR ((CONS 12) 20))"))
 '20'
+
+>>> lambda_process(lambda_stamps("(PRED THREE)"))
+???
+
+>>> lambda_process(lambda_stamps("(PRED TWO)"))
+'(λBRN.(λTTD.(BRN TTD)))'
+
+>>> lambda_process("((λF.FZJ) (λF.F))")
+'FZJ'
+
+>>> lambda_process(lambda_stamps("(PRED THREE)"))                                                                                                                                                                                             
+'(λLDI.(λGOT.(LDI (LDI GOT))))'
 """
 
 def is_well_formed(string_ST):
@@ -134,13 +146,26 @@ def is_well_formed(string_ST):
     while continue_BL:
         continue_BL = False
         if "(_ _)" in string_ST:
-            string_ST = string_ST.replace("(_ _)", "_")
+            string_ST = string_ST.replace("(_ _)", "=")
+            continue_BL = True
+        if "(= _)" in string_ST:
+            string_ST = string_ST.replace("(= _)", "=")
+            continue_BL = True
+        if "(_ =)" in string_ST:
+            string_ST = string_ST.replace("(_ =)", "=")
+            continue_BL = True
+        if "(= =)" in string_ST:
+            string_ST = string_ST.replace("(= =)", "=")
             continue_BL = True
         if "(λ_._)" in string_ST:
-            string_ST = string_ST.replace("(λ_._)", "_")
+            string_ST = string_ST.replace("(λ_._)", "=")
             continue_BL = True
+        if "(λ_.=)" in string_ST:
+            string_ST = string_ST.replace("(λ_.=)", "=")
+            continue_BL = True
+        DEBUG(debug_11, f"string_ST: {string_ST}")
 
-    return (string_ST == "_")
+    return (string_ST == "_") or (string_ST == "=")
         
 """Idea for detecting when to beta-reduce: do parentheses-counting. Scan the characters in the string from left to right. There should be a 'height_LS'
 array which would indicate how high a position of the string is. An open parenthesis increases the height_NT by 1. A close parentheses decreases the
@@ -206,79 +231,16 @@ debug_5 = False
 debug_6 = False
 debug_7 = False
 debug_8 = False
+debug_9 = False
+debug_10 = False
+debug_11 = False
+debug_12 = False
 
 def lambda_process(string_ST):
     if not is_well_formed(string_ST):
-        print("Error: the formula is not well-formed.")
+        print("Error: the given formula is not well-formed.")
         quit()
-    alpha_BL = True
-    while alpha_BL:
-        height_LS = [0] * len(string_ST)
-        height_NT = 0
-        variables_DC = {}
-        variable_BL = False
-        for i in range(len(string_ST)):
-            if (string_ST[i] == "("):
-                height_NT += 1
-            elif (i > 0) and (string_ST[i - 1] == ")"):
-                height_NT -= 1
-            height_LS[i] = height_NT
-            if (string_ST[i] == "λ"):
-                position_NT = i + 1
-                variable_ST = ""
-                variable_BL = True
-            elif (string_ST[i] == "."):
-                variable_BL = False
-                if not (variable_ST in variables_DC):
-                    #variables_DC += {variable_ST : [(position_NT, height_NT)]}
-                    variables_DC[variable_ST] = [(position_NT, height_NT)]
-                else:
-                    what_LS = variables_DC[variable_ST]
-                    what_LS += [(position_NT, height_NT)]
-                    variables_DC[variable_ST] = what_LS
-            elif variable_BL:
-                variable_ST += string_ST[i]
-        alpha_BL = False
-        variable_to_replace_ST = ""
-        for key_ST in variables_DC:
-            if (len(variables_DC[key_ST]) > 1) and not alpha_BL:
-                alpha_BL = True
-                variable_to_replace_ST = key_ST
-                max_height_NT = -1
-                max_position_NT = -1
-                for pair_OP in variables_DC[key_ST]:
-                    if (pair_OP[1] > max_height_NT):
-                        max_height_NT = pair_OP[1]
-                        max_position_NT = pair_OP[0]
-        "If alpha_BL is True then an alpha-replacement needs to be done."
-        if alpha_BL:
-            alpha_open_NT = max_position_NT
-            alpha_height_NT = max_height_NT
-            alpha_variable_ST = variable_to_replace_ST
-            not_closed_BL = True
-            i = alpha_open_NT + 1
-            height_NT = alpha_height_NT
-            while not_closed_BL:
-                if (string_ST[i] == "("):
-                    height_NT += 1
-                #elif (string_ST[i] == ")") and (height_NT == alpha_height_NT + 1):                
-                if (i > 0) and (string_ST[i - 1] == ")"):
-                    height_NT -= 1
-                if (string_ST[i] == ")") and (height_NT == alpha_height_NT):
-                    alpha_close_NT = i + 1
-                    not_closed_BL = False                  
-                i += 1
-                if (i >= len(string_ST)):
-                    not_closed_BL = False
-                    DEBUG(debug_7, f"string_ST = {string_ST}")
-                    DEBUG(debug_7, f"alpha_variable_ST = {alpha_variable_ST}")
-                    DEBUG(debug_7, f"alpha_open_NT = {alpha_open_NT}")
-                    DEBUG(debug_7, f"string_ST[alpha_open_NT : ] = {string_ST[alpha_open_NT : ]}")
-            alpha_replacer_ST = chr(random.randrange(65, 91)) + chr(random.randrange(65, 91)) + chr(random.randrange(65, 91))
-            for i in range(alpha_open_NT, alpha_close_NT - len(alpha_variable_ST) + 1):        # + 1?
-                if (string_ST[i:i + len(alpha_variable_ST)] == alpha_variable_ST):            # ?
-                    string_ST = string_ST[:i] + "@"*len(alpha_variable_ST) + string_ST[(i + len(alpha_variable_ST)):]       # ?
-            string_ST = string_ST.replace("@"*len(alpha_variable_ST), alpha_replacer_ST)
+    string_ST = alpha_replacement(string_ST)
     "beta-reduction"
     beta_BL = True
     while beta_BL:
@@ -287,7 +249,6 @@ def lambda_process(string_ST):
         height_NT = 0
         position_NT = -1    # unemployed
         terrace_LSST = [""] * (maximum_height(string_ST) + 2)
-        #lambda_pos_LSNT = [-1] * (string_ST.count("λ") + 1)
         lambda_pos_LSNT = [-1] * (maximum_height(string_ST) + 1)
         for i in range(len(string_ST)):
             DEBUG(debug_2, f"i = {i}")
@@ -335,37 +296,37 @@ def lambda_process(string_ST):
         if beta_BL:
             height_NT = beta_height_1_NT - 1
             DEBUG(debug_8, "= = = = = = = = = = = = = = = = = = = =")            
-            DEBUG(debug_4, f"L322. beta_height_1_NT = {beta_height_1_NT}")
-            DEBUG(debug_8, f"L323. string_ST = {string_ST}")
-            DEBUG(debug_8, f"L324. _________ = {beta_open_NT*'/' + string_ST[beta_open_NT : ]}")
-            DEBUG(debug_8, f"L325. beta_open_NT = {beta_open_NT}")
-            DEBUG(debug_8, f"L326. beta_lambda_NT = {beta_lambda_NT}")
+            DEBUG(debug_4, f"L370. beta_height_1_NT = {beta_height_1_NT}")
+            DEBUG(debug_8, f"L371. string_ST = {string_ST}")
+            DEBUG(debug_8, f"L372. _________ = {beta_open_NT*'/' + string_ST[beta_open_NT : ]}")
+            DEBUG(debug_8, f"L373. beta_open_NT = {beta_open_NT}")
+            DEBUG(debug_8, f"L374. beta_lambda_NT = {beta_lambda_NT}")
             beta_dot_NT = -1
             beta_space_NT = -1            
             beta_close_NT = -1
-            DEBUG(debug_8, f"L329. beta_space_NT = {beta_space_NT}")
-            DEBUG(debug_8, f"L330. beta_close_NT = {beta_close_NT}")
+            DEBUG(debug_8, f"L378. beta_space_NT = {beta_space_NT}")
+            DEBUG(debug_8, f"L379. beta_close_NT = {beta_close_NT}")
             for i in range(beta_open_NT, len(string_ST)):
-                DEBUG(debug_4, f"L332. i = {i} ; {string_ST[ : i]}")
+                DEBUG(debug_4, f"L381. i = {i} ; {string_ST[ : i]}")
                 if (string_ST[i] == "("):
                     height_NT += 1
-                    DEBUG(debug_4, f"L277. height_NT = {height_NT}")
+                    DEBUG(debug_4, f"L384. height_NT = {height_NT}")
                 elif (i > 0) and (string_ST[i - 1] == ")"):
                     height_NT -= 1
-                    DEBUG(debug_4, f"L280. height_NT = {height_NT}")
+                    DEBUG(debug_4, f"L387. height_NT = {height_NT}")
                 if (string_ST[i] == ".") and (height_NT == beta_height_2_NT):
                     if (beta_space_NT == -1):
                         beta_dot_NT = i
-                        DEBUG(debug_8, f"L342. beta_dot_NT = {beta_dot_NT}")
+                        DEBUG(debug_8, f"L391. beta_dot_NT = {beta_dot_NT}")
                 elif (string_ST[i] == " ") and (height_NT == beta_height_1_NT):
                     beta_space_NT = i
-                    DEBUG(debug_8, f"L345. beta_space_NT = {beta_space_NT}")
+                    DEBUG(debug_8, f"L394. beta_space_NT = {beta_space_NT}")
                 elif (string_ST[i] == ")") and (height_NT == beta_height_1_NT):
                     beta_close_NT = i
-                    DEBUG(debug_8, f"L348. beta_close_NT = {beta_close_NT}")
+                    DEBUG(debug_8, f"L397. beta_close_NT = {beta_close_NT}")
                     break
             beta_variable_ST = string_ST[beta_lambda_NT + 1 : beta_dot_NT]
-            DEBUG(debug_6, f"L295. beta_variable_ST = {beta_variable_ST}")
+            DEBUG(debug_6, f"L412. beta_variable_ST = {beta_variable_ST}")
             string_ST = string_ST[ : beta_lambda_NT + 1] + "#"*len(beta_variable_ST) + string_ST[beta_dot_NT : ]
             for i in range(beta_dot_NT + 1, beta_space_NT):
                 if (string_ST[i : i + len(beta_variable_ST)] == beta_variable_ST):
@@ -376,14 +337,16 @@ def lambda_process(string_ST):
                 string_ST = string_ST.replace("##", "#")
             while "__" in string_ST:
                 string_ST = string_ST.replace("__", "_")
-            DEBUG(debug_8, f"L357. string_ST = {string_ST}")
+            DEBUG(debug_8, f"L423. string_ST = {string_ST}")
             string_ST = string_ST.replace("_", beta_replacer_ST)
             string_ST = string_ST.replace("((λ#.", "")
             string_ST = string_ST.replace(") *)", "")
-            DEBUG(debug_8, f"L361. string_ST = {string_ST} <<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            DEBUG(debug_8 or debug_9, f"L427. string_ST = {string_ST} <<<<<<<<<<<<<<<<<<<<<<<<<<<")
             if not is_well_formed(string_ST):
-                print("L362. ERROR: the string resulting from the latest beta-reduction is not well-formed.")
+                DEBUG(debug_10, f"L429. string_ST = {string_ST}")
+                print("L430. ERROR: the string resulting from the latest beta-reduction is not well-formed.")
                 quit()
+            string_ST = alpha_replacement(string_ST)
     return string_ST
 
 def lambda_stamps(string_ST):
@@ -400,13 +363,9 @@ def lambda_stamps(string_ST):
             string_ST = string_ST.replace("CONS", "(λa.(λb.(λm.((m a) b))))")
             continue_BL = True
         elif "CAR" in string_ST:
-            #"Note: CAR is meant to be fed to a CONS, but it is isomorphic to TRUE."
-            #string_ST = string_ST.replace("CAR", "(λa.(λb.a))")
             string_ST = string_ST.replace("CAR", "(λp.(p TRUE))")
             continue_BL = True
         elif "CDR" in string_ST:
-            #"Note: CDR is meant to be fed to a CONS, but it is isomorphic to FALSE."
-            #string_ST = string_ST.replace("CDR", "(λa.(λb.b))")
             string_ST = string_ST.replace("CDR", "(λp.(p FALSE))")
             continue_BL = True
         elif "ZERO" in string_ST:
@@ -432,8 +391,8 @@ def lambda_stamps(string_ST):
             string_ST = string_ST.replace("MULT", "(λa.(λb.((a (ADD b)) ZERO)))")
             continue_BL = True
         elif "PRED" in string_ST:
-            #string_ST = string_ST.replaced("PRED", "(λn.
-            print(".....")
+            string_ST = string_ST.replace("PRED", "(λn.(CDR ((n (λp.((CONS (SUCC (CAR p))) (CAR p)))) ((CONS ZERO) ZERO))))")
+            continue_BL = True
     return string_ST
 
 def lambda_test(number_NT):
@@ -441,3 +400,87 @@ def lambda_test(number_NT):
         case 1:
             lambda_process("((λb.((λNKX.((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) ((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) NKX))) \
 (λFST.(λXZA.XZA)))) (λf.(λx.(f (f x)))))")
+        case 2:
+            lambda_process(lambda_stamps("(PRED THREE)"))
+
+def alpha_replacement(string_ST):
+    alpha_BL = True
+    while alpha_BL:
+        height_LS = [0] * len(string_ST)
+        height_NT = 0
+        variables_DC = {}
+        variable_BL = False
+        for i in range(len(string_ST)):
+            if (string_ST[i] == "("):
+                height_NT += 1
+            elif (i > 0) and (string_ST[i - 1] == ")"):
+                height_NT -= 1
+            height_LS[i] = height_NT
+            if (string_ST[i] == "λ"):
+                position_NT = i + 1
+                variable_ST = ""
+                variable_BL = True
+            elif (string_ST[i] == "."):
+                variable_BL = False
+                if not (variable_ST in variables_DC):
+                    variables_DC[variable_ST] = [(position_NT, height_NT)]
+                else:
+                    what_LS = variables_DC[variable_ST]
+                    what_LS += [(position_NT, height_NT)]
+                    variables_DC[variable_ST] = what_LS
+            elif variable_BL:
+                variable_ST += string_ST[i]
+        alpha_BL = False
+        variable_to_replace_ST = ""
+        for key_ST in variables_DC:
+            if (len(variables_DC[key_ST]) > 1) and not alpha_BL:
+                alpha_BL = True
+                variable_to_replace_ST = key_ST
+                max_height_NT = -1
+                max_position_NT = -1
+                for pair_OP in variables_DC[key_ST]:
+                    if (pair_OP[1] > max_height_NT):
+                        max_height_NT = pair_OP[1]
+                        max_position_NT = pair_OP[0]
+        "If alpha_BL is True then an alpha-replacement needs to be done."
+        if alpha_BL:
+            alpha_open_NT = max_position_NT
+            alpha_height_NT = max_height_NT
+            alpha_variable_ST = variable_to_replace_ST
+            not_closed_BL = True
+            i = alpha_open_NT + 1
+            height_NT = alpha_height_NT
+            DEBUG(debug_12, f"L292. alpha_open_NT = {alpha_open_NT}")
+            DEBUG(debug_12, f"L293. alpha_variable_ST = {alpha_variable_ST}")
+            DEBUG(debug_12, f"L294. string_ST                = {string_ST}")
+            while not_closed_BL:
+                if (string_ST[i] == "("):
+                    height_NT += 1
+                if (i > 0) and (string_ST[i - 1] == ")"):
+                    height_NT -= 1
+                if (string_ST[i] == ")") and (height_NT == alpha_height_NT):
+                    alpha_close_NT = i + 1
+                    DEBUG(debug_12, f"alpha_close_NT = {alpha_close_NT}")
+                    DEBUG(debug_12, f"string_ST[:alpha_close_NT + 1] = {string_ST[:alpha_close_NT + 1]}")
+                    not_closed_BL = False                  
+                i += 1
+                if (i >= len(string_ST)):
+                    not_closed_BL = False
+                    DEBUG(debug_7, f"L307. alpha_variable_ST = {alpha_variable_ST}")
+                    DEBUG(debug_7, f"L308. alpha_open_NT = {alpha_open_NT}")
+                    DEBUG(debug_7, f"L309. string_ST                   = {string_ST}")                    
+                    DEBUG(debug_7, f"L310. string_ST[alpha_open_NT : ] = {string_ST[alpha_open_NT : ]}")
+            alpha_replacer_ST = chr(random.randrange(65, 91)) + chr(random.randrange(65, 91)) + chr(random.randrange(65, 91))
+            for i in range(alpha_open_NT, alpha_close_NT - len(alpha_variable_ST) + 1):        # + 1?
+                DEBUG(debug_12, f"L315. i = {i}")
+                if (string_ST[i:i + len(alpha_variable_ST)] == alpha_variable_ST):            # ?
+                    DEBUG(debug_12, f"L317. {string_ST[i:i + len(alpha_variable_ST)]}")
+                    if not string_ST[i + len(alpha_variable_ST)].isalnum():
+                        DEBUG(debug_12, f"L319. i = {i}")
+                        DEBUG(debug_12, f"L320. string_ST[:i]            = {string_ST[:i]}")
+                        if (not string_ST[i - 1].isalnum()) or (string_ST[i - 1] == "λ"):
+                            DEBUG(debug_12, "L322. Got here!")
+                            string_ST = string_ST[:i] + "@"*len(alpha_variable_ST) + string_ST[(i + len(alpha_variable_ST)):]       # ?
+            string_ST = string_ST.replace("@"*len(alpha_variable_ST), alpha_replacer_ST)
+            DEBUG(debug_9, f"L325. string_ST                = {string_ST}")
+    return string_ST
