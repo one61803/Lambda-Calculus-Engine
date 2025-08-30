@@ -360,7 +360,7 @@ def process(string_ST):
 def stamps(string_ST):
     "Reference: https://www.cs.du.edu/~jedgingt/Courses/PL/Papers/Blaheta2000.pdf."
     "Rule: The body of a stamp cannot include the stamp's own name."
-    "Rule: Nested calling of stamps must be dendritic; there cannot be any cycles."
+    "Rule: Nested calling of stamps cannot form any cycles."
     "Violation of either rule leads to getting stuck in an infinite cycle of substitutions."
     continue_BL = True
     while continue_BL:
