@@ -454,10 +454,10 @@ def stamps(string_ST):
             string_ST = string_ST.replace("EQ", "(λx.(λy.((AND ((GTE x) y)) ((LTE x) y))))")
             continue_BL = True
         elif "GT" in string_ST:
-            string_ST = string_ST.replace("GT", "(λx.(λy.((AND ((GTE x) y)) (NOT ((EQ x) y)))))")
+            string_ST = string_ST.replace("GT", "(λx.(λy.((AND ((GTE x) y)) ((NEQ x) y))))")
             continue_BL = True
         elif "LT" in string_ST:
-            string_ST = string_ST.replace("LT", "(λx.(λy.((AND ((LTE x) y)) (NOT ((EQ x) y)))))")
+            string_ST = string_ST.replace("LT", "(λx.(λy.((AND ((LTE x) y)) ((NEQ x) y))))")
             continue_BL = True
         elif "MKFACT" in string_ST:
             string_ST = string_ST.replace("MKFACT", "(λfact.(λn.(((IF (ISZERO n)) ONE) ((MULT n) (fact (PRED n))))))")
