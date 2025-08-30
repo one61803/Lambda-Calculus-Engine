@@ -1,86 +1,102 @@
 import random
 """
->>> is_well_formed("(λx.x) (λx.x)") => False
->>> is_well_formed("((λx.x) (λx.x))") => True
-Alpha-replace only:
->>> lambda_process("((λx.x) (λx.x))") => '((λLPQ.LPQ) (λx.x))'
-Beta-reduction:
-lambda_process("((λx.x) y)") => 'y'
-lambda_process("(((λx.(λy.x)) 1) 2)") => '1'
-lambda_process("(((λx.(λy.y)) 1) 2)") => '2'
-lambda_process("((((λa.(λb.(λm.((m a) b)))) 10) 20) (λx.(λy.x)))") => 10
-lambda_process("((λm.((m 10) 20)) (λx.(λy.x)))") => 10
-lambda_process("((((λa.(λb.(λm.((m a) b)))) 10) 20) (λx.(λy.y)))") => 20
-lambda_process("((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f x))))") => '(λZQI.(λJFX.(ZQI (ZQI JFX))))'
-lambda_process('(λKTR.(λZBQ.(KTR (((λf.(λx.(f x))) KTR) ZBQ))))') => '(λKTR.(λZBQ.(KTR (KTR ZBQ))))'
-lambda_process("((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f x)))))") => '(λALV.(λNKT.(ALV (ALV (ALV NKT)))))'
+is_well_formed("(λx.x) (λx.x)") => False
+is_well_formed("((λx.x) (λx.x))") => True
+alpha_replace("((λx.x) (λx.x))") => '((λLPQ.LPQ) (λx.x))'
+process("((λx.x) y)") => 'y'
+process("(((λx.(λy.x)) 1) 2)") => '1'
+process("(((λx.(λy.y)) 1) 2)") => '2'
+process("((((λa.(λb.(λm.((m a) b)))) 10) 20) (λx.(λy.x)))") => 10
+process("((λm.((m 10) 20)) (λx.(λy.x)))") => 10
+process("((((λa.(λb.(λm.((m a) b)))) 10) 20) (λx.(λy.y)))") => 20
+process("((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f x))))") => '(λZQI.(λJFX.(ZQI (ZQI JFX))))'
+process('(λKTR.(λZBQ.(KTR (((λf.(λx.(f x))) KTR) ZBQ))))') => '(λKTR.(λZBQ.(KTR (KTR ZBQ))))'
+process("((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f x)))))") => '(λALV.(λNKT.(ALV (ALV (ALV NKT)))))'
 
 Version 2:
-lambda_stamps("(SUCC ONE)")
+stamps("(SUCC ONE)")
 '((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f x))))'
-lambda_process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f x))))')
+process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f x))))')
 '(λFSE.(λKQN.(FSE (FSE KQN))))'
 
-lambda_stamps("(SUCC TWO)")
+stamps("(SUCC TWO)")
 '((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f x)))))'
-lambda_process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f x)))))')
+process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f x)))))')
 '(λZEF.(λYGH.(ZEF (ZEF (ZEF YGH)))))'
 
-lambda_stamps("(SUCC THREE)")
+stamps("(SUCC THREE)")
 '((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f (f x))))))'
-lambda_process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f (f x))))))')
+process('((λn.(λf.(λx.(f ((n f) x))))) (λf.(λx.(f (f (f x))))))')
 '(λSTV.(λGZG.(STV (STV (STV (STV GZG))))))'
 
-lambda_stamps("((ADD ONE) ONE)")
+stamps("((ADD ONE) ONE)")
 '(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f x)))) (λf.(λx.(f x))))'
-lambda_process('(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f x)))) (λf.(λx.(f x))))')
+process('(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f x)))) (λf.(λx.(f x))))')
 '(λMGW.(λRGN.(MGW (MGW RGN))))'
 
-lambda_stamps("((ADD TWO) TWO)")
+stamps("((ADD TWO) TWO)")
 '(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f (f x))))) (λf.(λx.(f (f x)))))'
-lambda_process('(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f (f x))))) (λf.(λx.(f (f x)))))')
+process('(((λa.(λb.((a (λn.(λf.(λx.(f ((n f) x)))))) b))) (λf.(λx.(f (f x))))) (λf.(λx.(f (f x)))))')
 '(λJMX.(λOFP.(JMX (JMX (JMX (JMX OFP))))))'
 
-lambda_process(lambda_stamps("((ADD TWO) THREE)"))
+process(stamps("((ADD TWO) THREE)"))
 '(λXEA.(λNWN.(XEA (XEA (XEA (XEA (XEA NWN)))))))'
 
-lambda_process(lambda_stamps("((MULT TWO) TWO)")
+process(stamps("((MULT TWO) TWO)")
 '(λMRH.(λRPP.(MRH (MRH (MRH (MRH RPP))))))'
 
-lambda_process("((λb.((λNKX.((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) ((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) NKX))) \
+process("((λb.((λNKX.((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) ((b (λn.(λOIU.(λEZS.(OIU ((n OIU) EZS)))))) NKX))) \
 (λFST.(λXZA.XZA)))) (λf.(λx.(f (f x)))))")
 '(λOIU.(λEZS.(OIU (OIU (OIU (OIU EZS))))))'
 
-lambda_process(lambda_stamps("((MULT TWO) THREE)"))
+process(stamps("((MULT TWO) THREE)"))
 '(λYQR.(λSFD.(YQR (YQR (YQR (YQR (YQR (YQR SFD))))))))'
 
-lambda_process(lambda_stamps("((MULT THREE) THREE)"))
+process(stamps("((MULT THREE) THREE)"))
 '(λBJQ.(λHUA.(BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ (BJQ HUA)))))))))))'
 
-lambda_process(lambda_stamps("(CAR ((CONS 12) 20))"))
+process(stamps("(CAR ((CONS 12) 20))"))
 '12'
 
-lambda_process(lambda_stamps("(CDR ((CONS 12) 20))"))
+process(stamps("(CDR ((CONS 12) 20))"))
 '20'
 
-lambda_process(lambda_stamps("(PRED TWO)"))
+process(stamps("(PRED TWO)"))
 '(λBRN.(λTTD.(BRN TTD)))'
 
-lambda_process("((λF.FZJ) (λF.F))")
+process("((λF.FZJ) (λF.F))")
 'FZJ'
 
-lambda_process(lambda_stamps("(PRED THREE)"))                                                                                                                                                                                             
+process(stamps("(PRED THREE)"))                                                                                                                                                                                             
 '(λLDI.(λGOT.(LDI (LDI GOT))))'
 
-lambda_process(lambda_stamps("((MKFACT WHAT) ZERO)"))                                                                                                                                                                                         
+process(stamps("((MKFACT WHAT) ZERO)"))                                                                                                                                                                                         
 '(λWHV.(λSKN.(WHV SKN)))'
 
-lambda_process(lambda_stamps("(FACT THREE)"))
+process(stamps("(FACT THREE)"))
 '(λAFD.(λFQE.(AFD (AFD (AFD (AFD (AFD (AFD FQE))))))))'
 Note: It worked but it took 24 seconds.
+
+process(stamps("(FACT FOUR)"))
+'(λRGO.(λREQ.(RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO (RGO REQ))))))))))))))))))))))))))'
+Note: It took four minutes and forty seconds.
+
+process(stamps("((λx.(λy.(x y))) y)"))
+'(λXSP.(y XSP))'
+Note: An alpha-replacement should be performed on the bound y before inserting the free y in the scope of the bound y.
+(Reference: https://arxiv.org/pdf/1503.09060, section 1.2.)
+
+find_free_variables("((λt.(λy.(y t))) y)")
+['y']
+
+alpha_replacement("((λt.(λy.(y t))) y)")
+'((λt.(λTIH.(TIH t))) y)'
+
+process("((λt.(λy.(y t))) y)")
+'(λLPY.(LPY y))'
 """
 
-reserved_keywords_LSST = ["CAR", "CDR", "ONE", "TWO", "ADD"]
+reserved_keywords_LSST = ["CAR", "CDR", "ONE", "TWO", "ADD", "NOT", "AND", "GTE", "LTE", "SIX", "TEN", "NEQ"]
 
 def is_well_formed(string_ST):
     string_ST = string_ST.replace("A", "_")
@@ -245,12 +261,13 @@ debug_12 = False
 debug_13 = False
 debug_14 = False
 debug_15 = False
+debug_16 = False
 
 def DEBUG_input(flag_BL, msg_ST):
     if flag_BL:
         return input(msg_ST)
 
-def lambda_process(string_ST):
+def process(string_ST):
     if not is_well_formed(string_ST):
         print("Error: the given formula is not well-formed.")
         quit()
@@ -340,8 +357,11 @@ def lambda_process(string_ST):
             string_ST = alpha_replacement(string_ST)
     return string_ST
 
-def lambda_stamps(string_ST):
+def stamps(string_ST):
     "Reference: https://www.cs.du.edu/~jedgingt/Courses/PL/Papers/Blaheta2000.pdf."
+    "Rule: The body of a stamp cannot include the stamp's own name."
+    "Rule: Nested calling of stamps must be dendritic; there cannot be any cycles."
+    "Violation of either rule leads to getting stuck in an infinite cycle of substitutions."
     continue_BL = True
     while continue_BL:
         continue_BL = False
@@ -350,6 +370,15 @@ def lambda_stamps(string_ST):
             continue_BL = True
         elif "FALSE" in string_ST:
             string_ST = string_ST.replace("FALSE", "(λT.(λF.F))")
+            continue_BL = True
+        elif "NOT" in string_ST:
+            string_ST = string_ST.replace("NOT", "(λBOOL.((BOOL FALSE) TRUE))")
+            continue_BL = True
+        elif "AND" in string_ST:
+            string_ST = string_ST.replace("AND", "(λBOOL1.(λBOOL2.((BOOL1 BOOL2) FALSE)))")
+            continue_BL = True
+        elif "OR" in string_ST:
+            string_ST = string_ST.replace("OR", "(λBOOL1.(λBOOL2.((BOOL1 TRUE) BOOL2)))")
             continue_BL = True
         elif "CONS" in string_ST:
             string_ST = string_ST.replace("CONS", "(λa.(λb.(λm.((m a) b))))")
@@ -367,7 +396,7 @@ def lambda_stamps(string_ST):
             string_ST = string_ST.replace("ISZERO", "(λn.((n (λdummy.FALSE)) TRUE))")
             continue_BL = True
         elif "ZERO" in string_ST:
-            "Note: ZERO is meant to be used as a Church numeral, but it is isomorphic to FALSE."
+            "Note: ZERO is meant to be used as a Church numeral; but it is isomorphic to FALSE."
             string_ST = string_ST.replace("ZERO", "(λf.(λx.x))")
             continue_BL = True
         elif "ONE" in string_ST:
@@ -385,6 +414,21 @@ def lambda_stamps(string_ST):
         elif "FIVE" in string_ST:
             string_ST = string_ST.replace("FIVE", "(λf.(λx.(f (f (f (f (f x)))))))")
             continue_BL = True
+        elif "SIX" in string_ST:
+            string_ST = string_ST.replace("SIX", "(λf.(λx.(f (f (f (f (f (f x))))))))")
+            continue_BL = True
+        elif "SEVEN" in string_ST:
+            string_ST = string_ST.replace("SEVEN", "(λf.(λx.(f (f (f (f (f (f (f x)))))))))")
+            continue_BL = True
+        elif "EIGHT" in string_ST:
+            string_ST = string_ST.replace("EIGHT", "(λf.(λx.(f (f (f (f (f (f (f (f x))))))))))")
+            continue_BL = True
+        elif "NINE" in string_ST:
+            string_ST = string_ST.replace("NINE", "(λf.(λx.(f (f (f (f (f (f (f (f (f x)))))))))))")
+            continue_BL = True
+        elif "TEN" in string_ST:
+            string_ST = string_ST.replace("TEN", "(λf.(λx.(f (f (f (f (f (f (f (f (f (f x))))))))))))")
+            continue_BL = True            
         elif "SUCC" in string_ST:
             string_ST = string_ST.replace("SUCC", "(λn.(λf.(λx.(f ((n f) x)))))")
             continue_BL = True
@@ -397,23 +441,104 @@ def lambda_stamps(string_ST):
         elif "PRED" in string_ST:
             string_ST = string_ST.replace("PRED", "(λn.(CDR ((n (λp.((CONS (SUCC (CAR p))) (CAR p)))) ((CONS ZERO) ZERO))))")
             continue_BL = True
+        elif "GTE" in string_ST:
+            string_ST = string_ST.replace("GTE", "(λx.(λy.(ISZERO ((x PRED) y))))")
+            continue_BL = True
+        elif "LTE" in string_ST:
+            string_ST = string_ST.replace("LTE", "(λx.(λy.((GTE y) x)))")
+            continue_BL = True
+        elif "NEQ" in string_ST:
+            string_ST = string_ST.replace("NEQ", "(λx.(λy.(NOT ((EQ x) y))))")
+            continue_BL = True
+        elif "EQ" in string_ST:
+            string_ST = string_ST.replace("EQ", "(λx.(λy.((AND ((GTE x) y)) ((LTE x) y))))")
+            continue_BL = True
+        elif "GT" in string_ST:
+            string_ST = string_ST.replace("GT", "(λx.(λy.((AND ((GTE x) y)) (NOT ((EQ x) y)))))")
+            continue_BL = True
+        elif "LT" in string_ST:
+            string_ST = string_ST.replace("LT", "(λx.(λy.((AND ((LTE x) y)) (NOT ((EQ x) y)))))")
+            continue_BL = True
         elif "MKFACT" in string_ST:
             string_ST = string_ST.replace("MKFACT", "(λfact.(λn.(((IF (ISZERO n)) ONE) ((MULT n) (fact (PRED n))))))")
             continue_BL = True
         elif "Y" in string_ST:
+            "Y combinator."
             string_ST = string_ST.replace("Y", "(λf.((λx.(x x)) (λx.(f (x x)))))")
             continue_BL = True
         elif "FACT" in string_ST:
+            "Factorial function (defined recursively using the Y combinator and a single recursive step of the factorial function, called MKFACT)."
             string_ST = string_ST.replace("FACT", "(Y MKFACT)")
+            continue_BL = True
+        elif "TRIANGNUM" in string_ST:
+            "Triangular number (defined iteratively). Iteration works more quickly than recursion."
+            string_ST = string_ST.replace("TRIANGNUM", "(λn.(CDR ((n (λp.((CONS (SUCC (CAR p))) ((ADD (SUCC (CAR p))) (CDR p))))) ((CONS ZERO) ZERO))))")
             continue_BL = True
     return string_ST
 
+def find_free_variables(string_ST):
+    "What characters can stop a free variable name? ' ' & ')'. What characters can start a free variable name? ' ' & '('."
+    free_variables_LSST = []
+    bound_variables_DC = {}            # key is variable name and content is height
+    reverse_lookup_DC = {}             # for bound variables: key is height and content is variable name
+    record_free_BL = False
+    record_bound_BL = False
+    free_variable_ST = ""
+    bound_variable_ST = ""
+    height_NT = 0
+    for i in range(len(string_ST)):
+        DEBUG(debug_16, f"\nL639. i = {i}")
+        DEBUG(debug_16, "L640. ∂string_ST = " + string_ST[ : i + 1])
+        if (string_ST[i] == "("):
+            height_NT += 1
+        if (i > 0) and (string_ST[i - 1] == ")"):
+            height_NT -= 1
+        if string_ST[i] in [".", " ", ")"]:
+            if record_free_BL and (string_ST[i] in [" ", ")"]):
+                if not free_variable_ST in bound_variables_DC:
+                    free_variables_LSST.append(free_variable_ST)
+                    DEBUG(debug_16, f"L650. Appended {free_variable_ST} to free_variables_LSST.")
+                free_variable_ST = ""
+            if record_bound_BL and (string_ST[i] == "."):
+                if not bound_variable_ST in bound_variables_DC:
+                    bound_variables_DC[bound_variable_ST] = height_NT
+                    reverse_lookup_DC[height_NT] = bound_variable_ST
+                DEBUG(debug_16, f"L657. Added {bound_variable_ST}:{height_NT} to bound_variables_DC and {height_NT}:{bound_variable_ST} to reverse_lookup_DC.")
+                bound_variable_ST = ""
+            if (string_ST[i] == ")"):
+                if (height_NT in reverse_lookup_DC):
+                    which_ST = reverse_lookup_DC.pop(height_NT)
+                    del bound_variables_DC[which_ST]
+                    DEBUG(debug_16, f"L663. Deleted {which_ST} from bound_variables_DC and {height_NT} from reverse_lookup_DC.")
+            record_free_BL = False
+            record_bound_BL = False
+            DEBUG(debug_16, f"L665. record_free_BL = {record_free_BL}")
+            DEBUG(debug_16, f"L666. record_bound_BL = {record_bound_BL}")
+        if (string_ST[i] == "λ"):
+            record_bound_BL = True
+            bound_variable_ST = ""
+        if not (string_ST[i] in ["(", "λ", ".", " ", ")"]):
+            if not record_free_BL and (string_ST[i - 1] in [" ", "(", "."]):
+                record_free_BL = True
+                free_variable_ST = ""
+                DEBUG(debug_16, f"L675. record_free_BL = {record_free_BL}")
+            if record_free_BL:
+                free_variable_ST += string_ST[i]
+                DEBUG(debug_16, f"L678. free_variable_ST = {free_variable_ST}")
+            if record_bound_BL:
+                bound_variable_ST += string_ST[i]
+                DEBUG(debug_16, f"L681. bound_variable_ST = {bound_variable_ST}")
+        DEBUG_input(debug_16, "L682. OK? ")
+    return free_variables_LSST
+
 def alpha_replacement(string_ST):
+    "Accounting for free variables; trying to prevent a collision between a bound and a free variable."
     alpha_BL = True
     while alpha_BL:
         height_LS = [0] * len(string_ST)
         height_NT = 0
         variables_DC = {}
+        free_variables_LSST = find_free_variables(string_ST)
         variable_BL = False
         for i in range(len(string_ST)):
             if (string_ST[i] == "("):
@@ -438,15 +563,25 @@ def alpha_replacement(string_ST):
         alpha_BL = False
         variable_to_replace_ST = ""
         for key_ST in variables_DC:
-            if (len(variables_DC[key_ST]) > 1) and not alpha_BL:
-                alpha_BL = True
-                variable_to_replace_ST = key_ST
-                max_height_NT = -1
-                max_position_NT = -1
-                for pair_OP in variables_DC[key_ST]:
-                    if (pair_OP[1] > max_height_NT):
+            if not alpha_BL:
+                if (len(variables_DC[key_ST]) > 1):
+                    alpha_BL = True
+                    variable_to_replace_ST = key_ST
+                    max_height_NT = -1
+                    max_position_NT = -1
+                    for pair_OP in variables_DC[key_ST]:
+                        if (pair_OP[1] > max_height_NT):
+                            max_height_NT = pair_OP[1]
+                            max_position_NT = pair_OP[0]
+                elif (key_ST in free_variables_LSST):
+                    alpha_BL = True
+                    variable_to_replace_ST = key_ST
+                    max_height_NT = -1
+                    max_position_NT = -1
+                    for pair_OP in variables_DC[key_ST]:
                         max_height_NT = pair_OP[1]
                         max_position_NT = pair_OP[0]
+                
         "If alpha_BL is True then an alpha-replacement needs to be done."
         if alpha_BL:
             alpha_open_NT = max_position_NT
